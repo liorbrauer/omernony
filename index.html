@@ -130,6 +130,7 @@
     player.setImmovable(true);
     ball.setCollideWorldBounds(true);
     ball.setBounce(1, 1);
+    star.setCollideWorldBounds(true);
 
     this.physics.world.checkCollision.down = false;
     this.physics.add.collider(ball, blueBricks, hitBrick, null, this);
@@ -250,7 +251,16 @@
       } else if (cursors.right.isDown) {
         player.body.setVelocityX(350);
       }
+
+      if (isStarFallen(this.physics.world)) {
+        star.setVisible(false);
+        star.body.setVelocityY(0);
+      }
     }
+  }
+
+  function isStarFallen(world) {
+    return star.body.y > world.bounds.height;
   }
 
   function isGameOver(world) {
@@ -264,7 +274,7 @@
   function hitBrick(ball, brick) {
     brickBreakSound.play();
 
-    if (Math.random() > 0.5) {
+    if (!star.visible && Math.random() > 0.5) {
       star.body.x = brick.body.x;
       star.body.y = brick.body.y;
       star.setVisible(true);
@@ -301,7 +311,7 @@
 
   function hitStar(star, player) {
     starSound.play();
-    player.scaleX = player.scaleX * 1.1;
+    player.scaleX = player.scaleX * 1.25;
     star.setVisible(false);
   }
 </script>
