@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Breakout!</title>
+    <style>* {
+        padding: 0;
+        margin: 0;
+    }
+
+    body {
+        text-align: center;
+        background: #62aaf5;
+        margin-top: 30px;
+    }
+
+    canvas {
+        border: 2px solid black;
+    }
+    </style>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+</head>
+<body>
+<script>
+  var config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    physics: {
+      default: 'arcade',
+      arcade: {
+        gravity: false,
+      }
+    },
+    scene: {
+      preload: preload,
+      create: create,
+      update: update
+    }
+  };
+
+  var game = new Phaser.Game(config);
+
+  let player, ball, violetBricks, yellowBricks, blueBricks, cursors, star;
+  let gameStarted = false;
+  let openingText, gameOverText, playerWonText;
+  let livesText, scoretText;
+  let brickBreakSound, paddleHitSound, loseSound, starSound;
+
+  let lives = 3;
+  let score = 0;
+
+  function preload() {
+    this.load.image('ball', 'img/ball.png');
+    this.load.image('paddle', 'img/paddle.png');
+    this.load.image('brick-blue', 'img/brick-blue.png');
+    this.load.image('background', 'img/omernonybg.jpeg');
+    this.load.image('star', 'img/star.png');
+
+    this.load.audio('brick-break', ['sounds/brick.mp3']);
+    this.load.audio('paddle-hit', ['sounds/paddle.mp3']);
+    this.load.audio('lose', ['sounds/lose.mp3']);
+    this.load.audio('star-pickup', ['sounds/star.wav']);
+
+
+    // this.load.image('brick2', 'img/brick.png');
+    // this.load.image('brick3', 'img/brick.png');
+  }
+
+  function create() {
+    this.add.image(450, 200, 'background');
+    brickBreakSound = this.sound.add('brick-break');
+    paddleHitSound = this.sound.add('paddle-hit');
+    loseSound = this.sound.add('lose');
+    starSound = this.sound.add('star-pickup');
+
+    player = this.physics.add.sprite(
+      400, // x position
+      560, // y position
+      'paddle', // key of image for the sprite
+    );
+
+    ball = this.physics.add.sprite(
+      100, 540, 'ball'
+    )
+
+    star = this.physics.add.sprite(
+      150, 180, 'star'
+    );
+
+    star.setScale(.05);
+    star.setVisible(false);
+
+
+    violetBricks = this.physics.add.group({
+      key: 'brick-blue',
+      repeat: 9,
+      immovable: true,
+      setXY: {
+        x: 80,
+        y: 140,
+        stepX: 70
+      }
+    });
+
+    yellowBricks = this.physics.add.group({
+      key: 'brick-blue',
+      repeat: 9,
+      immovable: true,
+      setXY: {
+        x: 80,
+        y: 180,
+        stepX: 70
+      }
+    });
+
+    blueBricks = this.physics.add.group({
+      key: 'brick-blue',
+      repeat: 9,
+      immovable: true,
+      setXY: {
+        x: 80,
+        y: 220,
+        stepX: 70
+      }
+    });
+
+    cursors = this.input.keyboard.createCursorKeys();
+    player.setCollideWorldBounds(true);
+    player.setImmovable(true);
+    ball.setCollideWorldBounds(true);
+    ball.setBounce(1, 1);
+
+    this.physics.world.checkCollision.down = false;
+    this.physics.add.collider(ball, blueBricks, hitBrick, null, this);
+    this.physics.add.collider(ball, violetBricks, hitBrick, null, this);
+    this.physics.add.collider(ball, yellowBricks, hitBrick, null, this);
+    this.physics.add.collider(ball, player, hitPlayer, null, this);
+    this.physics.add.collider(star, player, hitStar, null, this);
+
+
+    openingText = this.add.text(
+      this.physics.world.bounds.width / 2,
+      this.physics.world.bounds.height / 2,
+      'Press SPACE to Start',
+      {
+        fontFamily: 'Monaco, Courier, monospace',
+        fontSize: '50px',
+        fill: '#62aaf5'
+      }
+    );
+
+    openingText.setOrigin(0.5);
+
+    livesText = this.add.text(
+      10,
+      10,
+      `${lives} lives`,
+      {
+        fontFamily: 'Monaco, Courier, monospace',
+        fontSize: '25px',
+        fill: 'green'
+      }
+    )
+
+    scoreText = this.add.text(
+      this.physics.world.bounds.width - 200,
+      10,
+      `Score: ${score}`,
+      {
+        fontFamily: 'Monaco, Courier, monospace',
+        fontSize: '25px',
+        fill: 'red'
+      }
+    )
+
+    // Create game over text
+    gameOverText = this.add.text(
+      this.physics.world.bounds.width / 2,
+      this.physics.world.bounds.height / 2,
+      'Game Over',
+      {
+        fontFamily: 'Monaco, Courier, monospace',
+        fontSize: '50px',
+        fill: '#fff'
+      }
+    );
+
+    gameOverText.setOrigin(0.5);
+
+    // Make it invisible until the player loses
+    gameOverText.setVisible(false);
+
+    // Create the game won text
+    playerWonText = this.add.text(
+      this.physics.world.bounds.width / 2,
+      this.physics.world.bounds.height / 2,
+      'You won!',
+      {
+        fontFamily: 'Monaco, Courier, monospace',
+        fontSize: '50px',
+        fill: '#fff'
+      }
+    );
+
+    playerWonText.setOrigin(0.5);
+
+// Make it invisible until the player wins
+    playerWonText.setVisible(false);
+  }
+
+  function update() {
+    if (isGameOver(this.physics.world)) {
+      // TODO: Show "Game over" message to the player
+      loseSound.play();
+      lives = lives - 1;
+      livesText.setText(`${lives} lives`);
+
+
+      if (lives >= 1) {
+        gameStarted = false;
+        ball.setVelocityY(0);
+        ball.setVelocityX(0);
+        ball.setY(540);
+      } else {
+        gameOverText.setVisible(true);
+        ball.disableBody(true, true);
+        gameStarted = false;
+      }
+    } else if (isWon()) {
+      // TODO: Show "You won!" message to the player
+      playerWonText.setVisible(true);
+      ball.disableBody(true, true);
+    } else {
+      player.body.setVelocityX(0);
+      player.body.setVelocityY(0);
+
+      if (!gameStarted) {
+        ball.setX(player.x);
+
+        if (cursors.space.isDown) {
+          gameStarted = true;
+          ball.setVelocityY(-200);
+          openingText.setVisible(false);
+        }
+      }
+
+      if (cursors.left.isDown) {
+        player.body.setVelocityX(-350);
+      } else if (cursors.right.isDown) {
+        player.body.setVelocityX(350);
+      }
+    }
+  }
+
+  function isGameOver(world) {
+    return ball.body.y > world.bounds.height;
+  }
+
+  function isWon() {
+    return blueBricks.countActive() + violetBricks.countActive() + yellowBricks.countActive() === 0;
+  }
+
+  function hitBrick(ball, brick) {
+    brickBreakSound.play();
+
+    if (Math.random() > 0.5) {
+      star.body.x = brick.body.x;
+      star.body.y = brick.body.y;
+      star.setVisible(true);
+      star.body.setVelocityY(100);
+    }
+
+    brick.disableBody(true, true);
+    score = score + 10;
+    scoreText.setText(`Score: ${score}`);
+
+    if (ball.body.velocity.x === 0) {
+      randNum = Math.random();
+      if (randNum >= 0.5) {
+        ball.body.setVelocityX(150);
+      } else {
+        ball.body.setVelocityX(-150);
+      }
+    }
+  }
+
+  function hitPlayer(ball, player) {
+    // Increase the velocity of the ball after it bounces
+    paddleHitSound.play();
+    ball.setVelocityY(ball.body.velocity.y - 5);
+
+    let newXVelocity = Math.abs(ball.body.velocity.x) + 5;
+    // If the ball is to the left of the player, ensure the X-velocity is negative
+    if (ball.x < player.x) {
+      ball.setVelocityX(-newXVelocity);
+    } else {
+      ball.setVelocityX(newXVelocity);
+    }
+  }
+
+  function hitStar(star, player) {
+    starSound.play();
+    player.scaleX = player.scaleX * 1.1;
+    star.setVisible(false);
+  }
+</script>
+</button>
+</body>
+</html>
