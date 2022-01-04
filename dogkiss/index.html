@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>How many times have I kissed my dog today?</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+      .kiss_button {
+        transition: 0.1s;
+        border-radius: 50%;
+        width: 300px;
+        display: block;
+        height: 300px;
+        border: 1px solid black;
+        box-shadow: 10px 9px 10px #c4c4c4;
+        font-size: 30px;
+        cursor: pointer;
+
+      }
+
+      .kiss_button:hover {
+        box-shadow: 1px 1px 10px #c4c4c4;
+      }
+
+      .kiss_button:active {
+        color: #fff;
+        background: linear-gradient(
+            90deg,
+            rgba(255, 0, 0, 1) 0%,
+            rgba(255, 154, 0, 1) 10%,
+            rgba(208, 222, 33, 1) 20%,
+            rgba(79, 220, 74, 1) 30%,
+            rgba(63, 218, 216, 1) 40%,
+            rgba(47, 201, 226, 1) 50%,
+            rgba(28, 127, 238, 1) 60%,
+            rgba(95, 21, 242, 1) 70%,
+            rgba(186, 12, 248, 1) 80%,
+            rgba(251, 7, 217, 1) 90%,
+            rgba(255, 0, 0, 1) 100%
+        );
+      }
+    </style>
+  </head>
+  <body>
+	 <h1 align="center">
+     How many times have I kissed my dog today?
+   </h1>
+   <div align="center">
+    <button class="kiss_button" onClick="addKiss()">ADD A KISS</button>
+  </div>
+
+  <div align="center" style="font-size: 25px; margin-top: 30px;">
+    I kissed him: <span id="counter">0</span> times today!
+  </div>
+   <script>
+      var number_of_kisses = 0;
+
+      function addKiss() {
+        debugger;
+        number_of_kisses = number_of_kisses + 1;
+        document.getElementById("counter").innerHTML = number_of_kisses;
+      }
+   </script>
+  </body>
+</html>
